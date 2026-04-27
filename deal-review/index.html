@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deal Review · Adrienne's Hub</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .deal-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      height: calc(100vh - 65px);
+    }
+
+    /* ── Deal List Sidebar ────────────── */
+    .deal-sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .sidebar-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .deal-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .deal-item:hover, .deal-item.active {
+      border-color: var(--accent);
+    }
+
+    .deal-item.active { background: rgba(99,102,241,0.08); }
+
+    .deal-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .deal-item-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* ── Deal Room ────────────────────── */
+    .deal-room {
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .deal-room-header {
+      margin-bottom: 24px;
+    }
+
+    .deal-room-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .deal-room-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .deal-meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+
+    /* ── MEDDIC ───────────────────────── */
+    .meddic-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .meddic-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+    }
+
+    .meddic-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-hover);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meddic-score {
+      font-size: 10px;
+      background: var(--border);
+      color: var(--text-muted);
+      padding: 1px 6px;
+      border-radius: 99px;
+    }
+
+    .meddic-value {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .meddic-empty {
+      font-size: 13px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .meddic-edit {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      margin-left: auto;
+    }
+
+    .meddic-edit:hover { color: var(--accent-hover); }
+
+    /* ── Inline editing ───────────────── */
+    .editable-field {
+      cursor: text;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      min-height: 24px;
+      outline: none;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      line-height: 1.5;
+      width: 100%;
+      background: transparent;
+    }
+
+    .editable-field:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    /* ── Risks & next steps ───────────── */
+    .risk-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(51,65,85,0.4);
+    }
+
+    .risk-row:last-child { border-bottom: none; }
+
+    .risk-icon { font-size: 16px; }
+    .risk-text { flex: 1; font-size: 13px; }
+    .risk-remove { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; }
+    .risk-remove:hover { color: var(--red); }
+
+    /* ── History log ──────────────────── */
+    .log-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(51,65,85,0.4);
+      font-size: 13px;
+    }
+
+    .log-item:last-child { border-bottom: none; }
+    .log-date { color: var(--text-dim); min-width: 80px; }
+    .log-text { flex: 1; }
+
+    /* ── Select a deal prompt ─────────── */
+    .select-prompt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .select-prompt .icon { font-size: 48px; margin-bottom: 16px; }
+    .select-prompt p { font-size: 15px; }
+  </style>
+</head>
+<body>
+
+<header class="hub-header">
+  <div class="breadcrumb">
+    <a href="../index.html">← Hub</a>
+    <span class="sep">/</span>
+    <span>Deal Review 🎯</span>
+  </div>
+  <div class="page-title">Deal Review Rooms</div>
+  <div class="header-right">
+    <button class="btn btn-primary" onclick="showNewDealModal()">+ New Deal Room</button>
+    <button class="btn-icon" onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<div class="deal-layout">
+  <!-- Sidebar -->
+  <div class="deal-sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Active Deals</span>
+      <span id="dealCount" style="font-size:12px;color:var(--text-dim)"></span>
+    </div>
+    <div id="dealList"></div>
+  </div>
+
+  <!-- Deal Room -->
+  <div class="deal-room" id="dealRoom">
+    <div class="select-prompt">
+      <div class="icon">🎯</div>
+      <p>← Select a deal to open its review room</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Deal Modal ─────────────────── -->
+<div id="newDealModal" style="display:none" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">New Deal Room</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Account Name</label>
+        <input type="text" id="nd-account" class="form-input" placeholder="Acme Corp">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Opportunity Name</label>
+        <input type="text" id="nd-name" class="form-input" placeholder="Acme Corp - B2B Portal">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Stage</label>
+        <select id="nd-stage" class="form-select">
+          <option>Discovery</option>
+          <option>Demo</option>
+          <option>Evaluation</option>
+          <option>Negotiation</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Forecast Category</label>
+        <select id="nd-fc" class="form-select">
+          <option>Pipeline</option>
+          <option>Best Case</option>
+          <option>Commit</option>
+          <option>Omitted</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Amount (ARR)</label>
+        <input type="number" id="nd-amount" class="form-input" placeholder="60000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Close Date</label>
+        <input type="date" id="nd-close" class="form-input">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Deal Type</label>
+      <select id="nd-type" class="form-select">
+        <option>New Business</option>
+        <option>Expansion</option>
+        <option>Renewal</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeNewDealModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createDeal()">Create Deal Room</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/data.js"></script>
+<script src="../assets/hub.js"></script>
+<script>
+requireAuth();
+
+// Deals live in memory + localStorage (merged with baked-in PIPELINE_DEALS)
+let deals = [];
+
+function loadDeals() {
+  const saved = JSON.parse(localStorage.getItem('hub_deals') || '[]');
+  // Merge: saved deals override baked-in by id
+  const savedIds = new Set(saved.map(d => d.id));
+  const base = PIPELINE_DEALS.filter(d => !savedIds.has(d.id));
+  deals = [...base, ...saved].sort((a, b) => new Date(a.closeDate) - new Date(b.closeDate));
+}
+
+function saveDeals() {
+  // Save only the user-created/edited ones
+  const toSave = deals.filter(d => d._userCreated || d._edited);
+  localStorage.setItem('hub_deals', JSON.stringify(deals)); // save all for simplicity
+}
+
+loadDeals();
+
+// ── Render Deal List ──────────────────────
+function renderDealList(activeId) {
+  document.getElementById('dealCount').textContent = deals.length + ' deals';
+  document.getElementById('dealList').innerHTML = deals.map(d => `
+    <div class="deal-item ${d.id === activeId ? 'active' : ''}" onclick="openDeal('${d.id}')">
+      <div class="deal-item-name">${d.account}</div>
+      <div class="deal-item-meta">
+        <span style="color:${stageColor(d.stage)}">${d.stage}</span>
+        <span style="color:var(--green)">${fmt$(d.amount)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:3px">Closes ${fmtDate(d.closeDate)}</div>
+    </div>
+  `).join('');
+}
+
+// ── Open Deal Room ────────────────────────
+let currentDealId = null;
+
+function openDeal(id) {
+  currentDealId = id;
+  const deal = deals.find(d => d.id === id);
+  if (!deal) return;
+
+  renderDealList(id);
+  renderRoom(deal);
+
+  // Update URL hash
+  history.replaceState(null, '', '#' + id);
+}
+
+function renderRoom(deal) {
+  const m = deal.meddic || {};
+  const risks = deal.risks || [];
+  const log = deal.activityLog || [];
+  const days = daysUntil(deal.closeDate);
+
+  document.getElementById('dealRoom').innerHTML = `
+    <div class="deal-room-header">
+      <div class="deal-room-title">${deal.account}</div>
+      <div class="deal-room-meta">
+        <span class="deal-meta-pill" style="border-color:${stageColor(deal.stage)};color:${stageColor(deal.stage)}">
+          ● ${deal.stage}
+        </span>
+        <span class="deal-meta-pill" style="color:var(--green)">
+          💰 ${fmt$(deal.amount)}
+        </span>
+        <span class="deal-meta-pill">
+          📅 Closes ${fmtDate(deal.closeDate)} ${days !== null ? `(${days < 0 ? Math.abs(days) + 'd overdue' : days + 'd left'})` : ''}
+        </span>
+        <span class="deal-meta-pill fc-${(deal.forecastCategory || '').replace(' ','').toLowerCase()}">
+          ${deal.forecastCategory || 'Pipeline'}
+        </span>
+        <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px;margin-left:8px" onclick="editDealHeader('${deal.id}')">Edit</button>
+        ${deal.sfUrl ? `<button class="btn btn-ghost" style="padding:4px 12px;font-size:12px" onclick="window.open('${HUB_CONFIG.sfUrl}/${deal.sfUrl}','_blank')">SF ↗</button>` : ''}
+      </div>
+    </div>
+
+    <!-- Next Step -->
+    <div class="section">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Next Step</span>
+          <span style="font-size:12px;color:var(--text-dim)">${deal.nextStepDate ? 'Due ' + fmtDate(deal.nextStepDate) : ''}</span>
+        </div>
+        <textarea class="editable-field form-textarea" id="field-nextStep" rows="2" onblur="saveField('${deal.id}','nextStep',this.value)">${deal.nextStep || ''}</textarea>
+      </div>
+    </div>
+
+    <!-- MEDDIC -->
+    <div class="section">
+      <div style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">
+        MEDDIC Qualification <span style="font-size:11px;background:var(--surface2);padding:2px 8px;border-radius:99px;margin-left:8px">${meddicScore(m)}/6</span>
+      </div>
+      <div class="meddic-grid">
+        ${[
+          { key: 'metrics', letter: 'M', label: 'Metrics', hint: 'Quantifiable business impact' },
+          { key: 'economicBuyer', letter: 'E', label: 'Economic Buyer', hint: 'Person who controls budget' },
+          { key: 'decisionCriteria', letter: 'D', label: 'Decision Criteria', hint: 'How they evaluate vendors' },
+          { key: 'decisionProcess', letter: 'D', label: 'Decision Process', hint: 'Steps to get a signed contract' },
+          { key: 'identifyPain', letter: 'I', label: 'Identify Pain', hint: 'Root problem they are solving' },
+          { key: 'champion', letter: 'C', label: 'Champion', hint: 'Internal advocate who sells for you' },
+        ].map(f => `
+          <div class="meddic-card">
+            <div class="meddic-label">
+              <span style="background:var(--accent);color:#fff;width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px">${f.letter}</span>
+              ${f.label}
+              ${m[f.key] ? '<span class="meddic-score">✓</span>' : ''}
+            </div>
+            <textarea class="editable-field form-textarea" rows="2" placeholder="${f.hint}" onblur="saveMeddic('${deal.id}','${f.key}',this.value)">${m[f.key] || ''}</textarea>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Risks & Blockers -->
+    <div class="section grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Risks & Blockers</span>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="addRisk('${deal.id}')">+ Add</button>
+        </div>
+        <div id="risks-${deal.id}">
+          ${risks.length === 0
+            ? `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:16px">No risks identified</div>`
+            : risks.map((r, i) => `
+              <div class="risk-row">
+                <span class="risk-icon">${r.type === 'blocker' ? '🚫' : '⚠️'}</span>
+                <span class="risk-text">${r.text}</span>
+                <button class="risk-remove" onclick="removeRisk('${deal.id}',${i})">×</button>
+              </div>
+            `).join('')}
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Strategy Notes</span>
+        </div>
+        <textarea class="editable-field form-textarea" rows="6" placeholder="Deal strategy, competitive notes, stakeholder map..." onblur="saveField('${deal.id}','notes',this.value)">${deal.notes || ''}</textarea>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="section">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Activity Log</span>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="addLog('${deal.id}')">+ Log Activity</button>
+        </div>
+        <div id="log-${deal.id}">
+          ${log.length === 0
+            ? `<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:16px">No activities logged yet</div>`
+            : log.slice().reverse().map(l => `
+              <div class="log-item">
+                <span class="log-date">${fmtDate(l.date)}</span>
+                <span style="min-width:80px;color:var(--text-muted)">${l.type}</span>
+                <span class="log-text">${l.note}</span>
+              </div>
+            `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function meddicScore(m) {
+  return ['metrics','economicBuyer','decisionCriteria','decisionProcess','identifyPain','champion']
+    .filter(k => m[k] && m[k].trim().length > 0).length;
+}
+
+// ── Save helpers ──────────────────────────
+function getDeal(id) { return deals.find(d => d.id === id); }
+
+function saveField(id, field, value) {
+  const deal = getDeal(id);
+  if (!deal) return;
+  deal[field] = value;
+  deal._edited = true;
+  saveDeals();
+}
+
+function saveMeddic(id, key, value) {
+  const deal = getDeal(id);
+  if (!deal) return;
+  if (!deal.meddic) deal.meddic = {};
+  deal.meddic[key] = value;
+  deal._edited = true;
+  saveDeals();
+  // Update score badge
+  const scoreEl = document.querySelector('.meddic-grid')?.previousElementSibling?.querySelector('span:last-child');
+  if (scoreEl) scoreEl.textContent = meddicScore(deal.meddic) + '/6';
+}
+
+// ── Risks ─────────────────────────────────
+function addRisk(id) {
+  const text = prompt('Describe the risk or blocker:');
+  if (!text) return;
+  const type = confirm('Is this a hard blocker? (Cancel = risk)') ? 'blocker' : 'risk';
+  const deal = getDeal(id);
+  if (!deal.risks) deal.risks = [];
+  deal.risks.push({ type, text, date: new Date().toISOString().split('T')[0] });
+  deal._edited = true;
+  saveDeals();
+  openDeal(id);
+}
+
+function removeRisk(id, index) {
+  const deal = getDeal(id);
+  deal.risks.splice(index, 1);
+  deal._edited = true;
+  saveDeals();
+  openDeal(id);
+}
+
+// ── Activity log ──────────────────────────
+function addLog(id) {
+  const types = ['Call', 'Email', 'Meeting', 'Demo', 'LinkedIn', 'Proposal'];
+  const type = prompt('Activity type:\n' + types.map((t, i) => `${i+1}. ${t}`).join('\n') + '\n\nEnter number or type:');
+  if (!type) return;
+  const note = prompt('What happened / outcome:');
+  if (!note) return;
+  const deal = getDeal(id);
+  if (!deal.activityLog) deal.activityLog = [];
+  const typeLabel = types[parseInt(type) - 1] || type;
+  deal.activityLog.push({
+    type: typeLabel,
+    note,
+    date: new Date().toISOString().split('T')[0]
+  });
+  deal._edited = true;
+  saveDeals();
+  openDeal(id);
+}
+
+// ── Edit Deal Header ──────────────────────
+function editDealHeader(id) {
+  const deal = getDeal(id);
+  const stages = ['Discovery', 'Demo', 'Evaluation', 'Negotiation', 'Closed Won', 'Closed Lost'];
+  const fcs = ['Pipeline', 'Best Case', 'Commit', 'Omitted'];
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <div class="modal-title">Edit Deal · ${deal.account}</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Stage</label>
+          <select id="edit-stage" class="form-select">
+            ${stages.map(s => `<option ${s === deal.stage ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Forecast Category</label>
+          <select id="edit-fc" class="form-select">
+            ${fcs.map(f => `<option ${f === deal.forecastCategory ? 'selected' : ''}>${f}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Amount (ARR)</label>
+          <input type="number" id="edit-amount" class="form-input" value="${deal.amount || ''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Close Date</label>
+          <input type="date" id="edit-close" class="form-input" value="${deal.closeDate || ''}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Next Step</label>
+        <input type="text" id="edit-nextstep" class="form-input" value="${deal.nextStep || ''}">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditedDeal('${id}',this)">Save Changes</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function saveEditedDeal(id, btn) {
+  const deal = getDeal(id);
+  deal.stage = document.getElementById('edit-stage').value;
+  deal.forecastCategory = document.getElementById('edit-fc').value;
+  deal.amount = parseInt(document.getElementById('edit-amount').value) || 0;
+  deal.closeDate = document.getElementById('edit-close').value;
+  deal.nextStep = document.getElementById('edit-nextstep').value;
+  deal._edited = true;
+  saveDeals();
+  btn.closest('.modal-overlay').remove();
+  openDeal(id);
+}
+
+// ── New Deal Modal ────────────────────────
+function showNewDealModal() {
+  document.getElementById('newDealModal').style.display = 'flex';
+}
+
+function closeNewDealModal() {
+  document.getElementById('newDealModal').style.display = 'none';
+}
+
+function createDeal() {
+  const account = document.getElementById('nd-account').value.trim();
+  if (!account) { alert('Account name is required'); return; }
+  const id = 'deal-' + Date.now();
+  const deal = {
+    id,
+    name: document.getElementById('nd-name').value.trim() || account + ' - B2B',
+    account,
+    stage: document.getElementById('nd-stage').value,
+    forecastCategory: document.getElementById('nd-fc').value,
+    amount: parseInt(document.getElementById('nd-amount').value) || 0,
+    closeDate: document.getElementById('nd-close').value,
+    type: document.getElementById('nd-type').value,
+    nextStep: '',
+    probability: 20,
+    meddic: {},
+    risks: [],
+    activityLog: [],
+    notes: '',
+    _userCreated: true
+  };
+  deals.unshift(deal);
+  saveDeals();
+  closeNewDealModal();
+  renderDealList(id);
+  openDeal(id);
+}
+
+// ── Init ──────────────────────────────────
+renderDealList();
+
+// Open from URL hash
+const hash = location.hash.replace('#', '');
+if (hash && deals.find(d => d.id === hash)) {
+  openDeal(hash);
+}
+</script>
+</body>
+</html>

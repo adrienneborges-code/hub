@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adrienne's Sales Hub</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    .login-wrap {
+      width: 340px;
+      text-align: center;
+    }
+
+    .login-wordmark {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+
+    .pin-display {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      transition: all 0.15s;
+    }
+
+    .pin-dot.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .pin-dot.error {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .numpad-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 18px;
+      font-size: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.1s;
+      user-select: none;
+    }
+
+    .numpad-btn:hover {
+      background: var(--surface2);
+      border-color: var(--accent);
+    }
+
+    .numpad-btn:active {
+      transform: scale(0.95);
+    }
+
+    .numpad-btn.back {
+      font-size: 18px;
+      color: var(--text-muted);
+    }
+
+    .numpad-btn.zero {
+      grid-column: 2;
+    }
+
+    .login-hint {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 16px;
+    }
+
+    /* Post-auth landing */
+    .hub-landing { display: none; }
+
+    .greeting {
+      margin-bottom: 8px;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .greeting .wave { display: inline-block; }
+
+    .sub-greeting {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 44px;
+    }
+
+    .nav-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .nav-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      cursor: pointer;
+      transition: all 0.18s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .nav-card:hover {
+      border-color: var(--accent);
+      background: var(--surface2);
+      transform: translateX(4px);
+    }
+
+    .nav-card-icon {
+      font-size: 28px;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+
+    .nav-card-text { flex: 1; text-align: left; }
+
+    .nav-card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .nav-card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .nav-card-arrow {
+      color: var(--text-dim);
+      font-size: 20px;
+    }
+
+    .disclaimer {
+      margin-top: 40px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth Screen ──────────────────────── -->
+<div class="login-wrap" id="authScreen">
+  <div class="login-wordmark">Adrienne's Hub</div>
+
+  <div class="pin-display" id="pinDisplay">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+
+  <div class="numpad" id="numpad">
+    <button class="numpad-btn" onclick="pressKey('1')">1</button>
+    <button class="numpad-btn" onclick="pressKey('2')">2</button>
+    <button class="numpad-btn" onclick="pressKey('3')">3</button>
+    <button class="numpad-btn" onclick="pressKey('4')">4</button>
+    <button class="numpad-btn" onclick="pressKey('5')">5</button>
+    <button class="numpad-btn" onclick="pressKey('6')">6</button>
+    <button class="numpad-btn" onclick="pressKey('7')">7</button>
+    <button class="numpad-btn" onclick="pressKey('8')">8</button>
+    <button class="numpad-btn" onclick="pressKey('9')">9</button>
+    <button class="numpad-btn zero" onclick="pressKey('0')">0</button>
+    <button class="numpad-btn back" onclick="pressBack()">⌫</button>
+  </div>
+
+  <div class="login-hint">Internal use only · Not for distribution</div>
+</div>
+
+<!-- ── Hub Landing ──────────────────────── -->
+<div class="login-wrap hub-landing" id="hubLanding">
+  <div class="greeting">Good, Adrienne. <span class="wave">👋</span></div>
+  <div class="sub-greeting" id="hubSubGreeting">Sr. Account Executive · B2B/Wholesale AMER</div>
+
+  <nav class="nav-cards">
+    <a href="dashboard/index.html" class="nav-card">
+      <div class="nav-card-icon">📊</div>
+      <div class="nav-card-text">
+        <div class="nav-card-title">Sales Dashboard</div>
+        <div class="nav-card-desc">Forecast, pipeline board, hot deals, left-to-close, and this week's activities</div>
+      </div>
+      <div class="nav-card-arrow">›</div>
+    </a>
+
+    <a href="deal-review/index.html" class="nav-card">
+      <div class="nav-card-icon">🎯</div>
+      <div class="nav-card-text">
+        <div class="nav-card-title">Deal Review Rooms</div>
+        <div class="nav-card-desc">MEDDIC qualification, strategy notes, risks, blockers, and next steps — one room per deal</div>
+      </div>
+      <div class="nav-card-arrow">›</div>
+    </a>
+
+    <a href="map-hub/index.html" class="nav-card">
+      <div class="nav-card-icon">🗺️</div>
+      <div class="nav-card-text">
+        <div class="nav-card-title">MAP Hub</div>
+        <div class="nav-card-desc">Mutual Action Plans by quarter — deal status, open MAPs, and close timelines</div>
+      </div>
+      <div class="nav-card-arrow">›</div>
+    </a>
+  </nav>
+
+  <div class="disclaimer">Internal use only · Shopify Confidential</div>
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/hub.js"></script>
+<script>
+  let pin = '';
+
+  function updateDots() {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('d' + i);
+      dot.classList.toggle('filled', i < pin.length);
+      dot.classList.remove('error');
+    }
+  }
+
+  function pressKey(k) {
+    if (pin.length >= 4) return;
+    pin += k;
+    updateDots();
+    if (pin.length === 4) checkPin();
+  }
+
+  function pressBack() {
+    pin = pin.slice(0, -1);
+    updateDots();
+  }
+
+  function checkPin() {
+    if (pin === HUB_CONFIG.pin) {
+      setAuthed();
+      showHub();
+    } else {
+      // Error shake
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('d' + i);
+        dot.classList.add('error');
+      }
+      document.getElementById('numpad').classList.add('shake');
+      setTimeout(() => {
+        pin = '';
+        updateDots();
+        document.getElementById('numpad').classList.remove('shake');
+      }, 500);
+    }
+  }
+
+  function showHub() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('hubLanding').style.display = 'block';
+
+    // Personalize sub-greeting with today's date + pipeline snapshot
+    const total = pipelineTotal();
+    const open = PIPELINE_DEALS.length;
+    const q = currentQuarter();
+    const sub = document.getElementById('hubSubGreeting');
+    sub.textContent = `${open} open deal${open !== 1 ? 's' : ''} · ${fmt$(total)} pipeline · ${q.label}`;
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+    if (e.key === 'Backspace') pressBack();
+  });
+
+  // If already authed, skip to hub
+  if (isAuthed()) showHub();
+
+  // Handle redirect after auth
+  const params = new URLSearchParams(location.search);
+  if (params.get('redirect') && isAuthed()) {
+    window.location.href = params.get('redirect');
+  }
+</script>
+</body>
+</html>

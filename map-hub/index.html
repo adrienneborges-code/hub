@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAP Hub · Adrienne's Hub</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    /* ── Quarter Tabs ─────────────────── */
+    .quarter-filter {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .q-tab {
+      padding: 7px 18px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--surface);
+      transition: all 0.15s;
+    }
+
+    .q-tab.active, .q-tab:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Deal Row ─────────────────────── */
+    .map-table-wrap { overflow-x: auto; }
+
+    .map-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 900px;
+    }
+
+    .map-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .map-table td {
+      padding: 14px;
+      border-bottom: 1px solid rgba(51,65,85,0.4);
+      vertical-align: middle;
+    }
+
+    .map-table tbody tr:hover { background: var(--surface2); cursor: pointer; }
+
+    /* ── MAP Progress bar ─────────────── */
+    .map-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 120px;
+    }
+
+    .map-bar {
+      flex: 1;
+      height: 5px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .map-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--accent);
+    }
+
+    .map-pct {
+      font-size: 11px;
+      color: var(--text-dim);
+      min-width: 30px;
+    }
+
+    /* ── MAP detail ───────────────────── */
+    .map-detail-section {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 8px;
+    }
+
+    .map-steps { list-style: none; }
+
+    .map-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(51,65,85,0.4);
+    }
+
+    .map-step:last-child { border-bottom: none; }
+
+    .step-check {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      transition: all 0.15s;
+    }
+
+    .step-check.done {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+
+    .step-text { flex: 1; font-size: 13px; }
+    .step-text.done-text { text-decoration: line-through; color: var(--text-dim); }
+    .step-owner { font-size: 11px; color: var(--text-dim); min-width: 80px; }
+    .step-due { font-size: 11px; color: var(--text-dim); min-width: 80px; }
+    .step-remove { background: none; border: none; color: var(--text-dim); cursor: pointer; }
+    .step-remove:hover { color: var(--red); }
+
+    /* ── Stats row ────────────────────── */
+    .map-stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="hub-header">
+  <div class="breadcrumb">
+    <a href="../index.html">← Hub</a>
+    <span class="sep">/</span>
+    <span>MAP Hub 🗺️</span>
+  </div>
+  <div class="page-title">MAP Hub</div>
+  <div class="header-right">
+    <button class="btn btn-primary" onclick="showAddMapModal()">+ New MAP</button>
+    <button class="btn-icon" onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<main class="hub-main">
+
+  <!-- Stat row -->
+  <div class="map-stat-row" id="mapStats"></div>
+
+  <!-- Quarter filter -->
+  <div class="quarter-filter" id="quarterFilter"></div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" id="tableTitle">All Deals</span>
+    </div>
+    <div class="map-table-wrap">
+      <table class="map-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Type</th>
+            <th>Close Date</th>
+            <th>Days Active</th>
+            <th>Stage</th>
+            <th>Forecast</th>
+            <th>MAP Progress</th>
+            <th>Next Step</th>
+            <th>Links</th>
+          </tr>
+        </thead>
+        <tbody id="mapTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MAP Detail Panel (hidden by default) -->
+  <div id="mapDetailPanel" style="margin-top:20px;display:none">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="mapDetailTitle">MAP Steps</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px" onclick="addMapStep()">+ Add Step</button>
+          <button class="btn-icon" onclick="closeMapDetail()">✕ Close</button>
+        </div>
+      </div>
+      <ul class="map-steps" id="mapStepsList"></ul>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── New MAP Modal ──────────────────── -->
+<div id="addMapModal" style="display:none" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">New Mutual Action Plan</div>
+    <div class="form-group">
+      <label class="form-label">Link to Deal</label>
+      <select id="map-dealSelect" class="form-select"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">MAP Title (optional)</label>
+      <input type="text" id="map-title" class="form-input" placeholder="e.g. Acme Corp — Path to Close">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Proposal Deck Link (optional)</label>
+      <input type="text" id="map-deck" class="form-input" placeholder="https://docs.google.com/...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddMapModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createMAP()">Create MAP</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/data.js"></script>
+<script src="../assets/hub.js"></script>
+<script>
+requireAuth();
+
+// MAPs stored in localStorage
+let maps = getMaps();
+
+// Load saved deals (same as deal review)
+function getDeals() {
+  const saved = JSON.parse(localStorage.getItem('hub_deals') || '[]');
+  const savedIds = new Set(saved.map(d => d.id));
+  const base = PIPELINE_DEALS.filter(d => !savedIds.has(d.id));
+  return [...base, ...saved].filter(d => !['Closed Lost'].includes(d.stage));
+}
+
+let deals = getDeals();
+let activeQuarter = 'all';
+let activeMapId = null;
+
+// ── Stats ─────────────────────────────────
+function renderStats() {
+  const total = deals.length;
+  const withMap = deals.filter(d => maps.find(m => m.dealId === d.id)).length;
+  const mapsOpen = maps.filter(m => {
+    const deal = deals.find(d => d.id === m.dealId);
+    return deal && !['Closed Won','Closed Lost'].includes(deal.stage);
+  }).length;
+  const avgProgress = maps.length > 0
+    ? Math.round(maps.reduce((s, m) => s + mapProgress(m), 0) / maps.length)
+    : 0;
+
+  document.getElementById('mapStats').innerHTML = [
+    { label: 'Active Deals', val: total, color: '' },
+    { label: 'Deals w/ MAP', val: withMap, color: 'var(--accent-hover)' },
+    { label: 'Open MAPs', val: mapsOpen, color: 'var(--green)' },
+    { label: 'Avg MAP Progress', val: avgProgress + '%', color: 'var(--yellow)' },
+  ].map(s => `
+    <div class="stat-tile">
+      <div class="label">${s.label}</div>
+      <div class="value" style="color:${s.color || 'var(--text)'}">${s.val}</div>
+    </div>
+  `).join('');
+}
+
+// ── Quarter filter ────────────────────────
+function renderQuarterFilter() {
+  const quarters = [{ label: 'All Deals', val: 'all' }, ...HUB_CONFIG.quarters.map(q => ({ label: q.label, val: q.label }))];
+  document.getElementById('quarterFilter').innerHTML = quarters.map(q => `
+    <button class="q-tab ${activeQuarter === q.val ? 'active' : ''}" onclick="setQuarter('${q.val}')">${q.label}</button>
+  `).join('');
+}
+
+function setQuarter(val) {
+  activeQuarter = val;
+  renderQuarterFilter();
+  renderTable();
+  document.getElementById('tableTitle').textContent = val === 'all' ? 'All Deals' : val;
+}
+
+// ── Filter deals by quarter ───────────────
+function filterDeals() {
+  if (activeQuarter === 'all') return deals;
+  const q = HUB_CONFIG.quarters.find(q => q.label === activeQuarter);
+  if (!q) return deals;
+  return deals.filter(d => {
+    if (!d.closeDate) return false;
+    return d.closeDate >= q.start && d.closeDate <= q.end;
+  });
+}
+
+// ── MAP progress ──────────────────────────
+function mapProgress(map) {
+  if (!map.steps || map.steps.length === 0) return 0;
+  const done = map.steps.filter(s => s.done).length;
+  return Math.round((done / map.steps.length) * 100);
+}
+
+// ── Table ─────────────────────────────────
+function renderTable() {
+  const filtered = filterDeals();
+
+  if (filtered.length === 0) {
+    document.getElementById('mapTableBody').innerHTML = `
+      <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-dim)">No deals in this period</td></tr>
+    `;
+    return;
+  }
+
+  document.getElementById('mapTableBody').innerHTML = filtered.map(deal => {
+    const map = maps.find(m => m.dealId === deal.id);
+    const progress = map ? mapProgress(map) : null;
+    const daysActive = deal.createdAt ? daysSince(deal.createdAt) : '—';
+    const days = daysUntil(deal.closeDate);
+
+    return `
+      <tr onclick="selectDeal('${deal.id}')">
+        <td>
+          <div style="font-weight:600">${deal.account}</div>
+          <div style="font-size:11px;color:var(--text-dim)">${deal.type || 'New Business'}</div>
+        </td>
+        <td>${deal.type || 'New Business'}</td>
+        <td>
+          <div>${fmtDate(deal.closeDate)}</div>
+          <div style="font-size:11px;color:${days !== null && days < 30 ? 'var(--red)' : 'var(--text-dim)'}">${days !== null ? days + 'd left' : ''}</div>
+        </td>
+        <td>${typeof daysActive === 'number' ? daysActive + 'd' : '—'}</td>
+        <td><span style="color:${stageColor(deal.stage)};font-weight:600">${deal.stage}</span></td>
+        <td><span class="badge fc-${(deal.forecastCategory || '').replace(' ','').toLowerCase()}">${deal.forecastCategory || '—'}</span></td>
+        <td>
+          ${map !== undefined
+            ? `<div class="map-progress">
+                <div class="map-bar"><div class="map-bar-fill" style="width:${progress}%"></div></div>
+                <span class="map-pct">${progress}%</span>
+              </div>`
+            : `<button class="btn btn-ghost" style="padding:3px 10px;font-size:11px" onclick="event.stopPropagation();createMapForDeal('${deal.id}')">+ Create MAP</button>`}
+        </td>
+        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)">${deal.nextStep || '—'}</td>
+        <td>
+          <div style="display:flex;gap:6px">
+            ${map?.deckUrl ? `<a href="${map.deckUrl}" target="_blank" class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation()">Deck ↗</a>` : ''}
+            <a href="../deal-review/index.html#${deal.id}" class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="event.stopPropagation()">Review ↗</a>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── Select deal / show MAP ────────────────
+function selectDeal(dealId) {
+  activeMapId = dealId;
+  const deal = deals.find(d => d.id === dealId);
+  const map = maps.find(m => m.dealId === dealId);
+
+  if (!map) {
+    if (confirm(`No MAP exists for ${deal.account}. Create one?`)) {
+      createMapForDeal(dealId);
+    }
+    return;
+  }
+
+  document.getElementById('mapDetailTitle').textContent = `${deal.account} · MAP (${mapProgress(map)}% complete)`;
+  renderMapSteps(map);
+  document.getElementById('mapDetailPanel').style.display = 'block';
+  document.getElementById('mapDetailPanel').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeMapDetail() {
+  document.getElementById('mapDetailPanel').style.display = 'none';
+  activeMapId = null;
+}
+
+function renderMapSteps(map) {
+  const steps = map.steps || [];
+  document.getElementById('mapStepsList').innerHTML = steps.length === 0
+    ? `<li style="padding:20px;text-align:center;color:var(--text-dim)">No steps yet. Add your first step →</li>`
+    : steps.map((s, i) => `
+        <li class="map-step">
+          <div class="step-check ${s.done ? 'done' : ''}" onclick="toggleStep('${map.dealId}',${i})">${s.done ? '✓' : ''}</div>
+          <div class="step-text ${s.done ? 'done-text' : ''}">${s.text}</div>
+          <div class="step-owner">${s.owner || ''}</div>
+          <div class="step-due">${s.due ? fmtDate(s.due) : ''}</div>
+          <button class="step-remove" onclick="removeStep('${map.dealId}',${i})">×</button>
+        </li>
+      `).join('');
+}
+
+function toggleStep(dealId, index) {
+  const map = maps.find(m => m.dealId === dealId);
+  if (!map) return;
+  map.steps[index].done = !map.steps[index].done;
+  saveMaps(maps);
+  renderMapSteps(map);
+  renderTable();
+  renderStats();
+  document.getElementById('mapDetailTitle').textContent = `${deals.find(d=>d.id===dealId)?.account} · MAP (${mapProgress(map)}% complete)`;
+}
+
+function removeStep(dealId, index) {
+  const map = maps.find(m => m.dealId === dealId);
+  if (!map) return;
+  map.steps.splice(index, 1);
+  saveMaps(maps);
+  renderMapSteps(map);
+  renderTable();
+  renderStats();
+}
+
+function addMapStep() {
+  const map = maps.find(m => m.dealId === activeMapId);
+  if (!map) return;
+  const text = prompt('Step description:');
+  if (!text) return;
+  const owner = prompt('Owner (Adrienne / Prospect / SE / etc.):') || '';
+  const due = prompt('Due date (YYYY-MM-DD, optional):') || '';
+  if (!map.steps) map.steps = [];
+  map.steps.push({ text, owner, due, done: false });
+  saveMaps(maps);
+  renderMapSteps(map);
+  renderTable();
+  renderStats();
+}
+
+// ── Create MAP ────────────────────────────
+function createMapForDeal(dealId) {
+  const deal = deals.find(d => d.id === dealId);
+  const map = {
+    id: 'map-' + Date.now(),
+    dealId,
+    title: deal.account + ' — Path to Close',
+    deckUrl: '',
+    steps: [
+      { text: 'Align on mutual success criteria', owner: 'Adrienne', due: '', done: false },
+      { text: 'Technical demo / architecture review', owner: 'SE', due: '', done: false },
+      { text: 'Business case / ROI presentation', owner: 'Adrienne', due: '', done: false },
+      { text: 'Legal / security review', owner: 'Prospect IT/Legal', due: '', done: false },
+      { text: 'Procurement & contract review', owner: 'Prospect Procurement', due: '', done: false },
+      { text: 'Executive sign-off', owner: 'Economic Buyer', due: '', done: false },
+    ],
+    createdAt: new Date().toISOString().split('T')[0]
+  };
+  maps.push(map);
+  saveMaps(maps);
+  renderTable();
+  renderStats();
+  selectDeal(dealId);
+}
+
+// ── Modal ─────────────────────────────────
+function showAddMapModal() {
+  const dealsWithoutMap = deals.filter(d => !maps.find(m => m.dealId === d.id));
+  document.getElementById('map-dealSelect').innerHTML = dealsWithoutMap.length === 0
+    ? `<option>All deals already have MAPs</option>`
+    : dealsWithoutMap.map(d => `<option value="${d.id}">${d.account}</option>`).join('');
+  document.getElementById('addMapModal').style.display = 'flex';
+}
+
+function closeAddMapModal() {
+  document.getElementById('addMapModal').style.display = 'none';
+}
+
+function createMAP() {
+  const dealId = document.getElementById('map-dealSelect').value;
+  const title = document.getElementById('map-title').value.trim();
+  const deck = document.getElementById('map-deck').value.trim();
+  if (!dealId) return;
+  const deal = deals.find(d => d.id === dealId);
+  const map = {
+    id: 'map-' + Date.now(),
+    dealId,
+    title: title || (deal?.account + ' — Path to Close'),
+    deckUrl: deck,
+    steps: [],
+    createdAt: new Date().toISOString().split('T')[0]
+  };
+  maps.push(map);
+  saveMaps(maps);
+  closeAddMapModal();
+  renderTable();
+  renderStats();
+  selectDeal(dealId);
+}
+
+// ── Init ──────────────────────────────────
+renderStats();
+renderQuarterFilter();
+renderTable();
+</script>
+</body>
+</html>
