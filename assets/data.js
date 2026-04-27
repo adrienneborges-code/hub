@@ -4,7 +4,7 @@
 const HUB_CONFIG = {
   name: "Adrienne Borges",
   title: "Account Executive · B2B/Wholesale AMER",
-  pin: "0000", // CHANGE THIS to your desired PIN
+  pin: "1738",
   sfUrl: "https://shopify.lightning.force.com",
   fy26: {
     quota: 1041000,
