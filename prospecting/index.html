@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prospecting Tracker · Adrienne's Hub</title>
+  <link rel="stylesheet" href="../assets/style.css?v=2">
+  <style>
+    /* ── Layout ────────────────────────────────────────── */
+    .prospect-main {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 60px);
+    }
+
+    .prospect-sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+
+    .filter-section { margin-bottom: 22px; }
+
+    .filter-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .prospect-sidebar input[type="text"],
+    .prospect-sidebar select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .prospect-sidebar input[type="text"]:focus,
+    .prospect-sidebar select:focus { outline: none; border-color: var(--accent); }
+
+    .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-pills-stack { flex-direction: column; }
+
+    .filter-pill {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .filter-pill:hover { border-color: var(--accent-hover); color: var(--text); }
+    .filter-pill.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .filter-pill.rating-hot.active   { background: var(--red);    border-color: var(--red); }
+    .filter-pill.rating-warm.active  { background: var(--yellow); border-color: var(--yellow); color: #1a1a1a; }
+    .filter-pill.rating-cold.active  { background: #3b82f6;       border-color: #3b82f6; }
+
+    .sidebar-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      margin-bottom: 6px;
+    }
+    .sidebar-btn:hover { border-color: var(--accent-hover); color: var(--text); }
+
+    /* ── Main content ──────────────────────────────────── */
+    .prospect-content {
+      padding: 20px 28px;
+      overflow-y: auto;
+    }
+
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .stat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .stat-chip strong { color: var(--text); font-weight: 600; }
+    .stat-chip.hot  strong { color: var(--red); }
+    .stat-chip.warm strong { color: var(--yellow); }
+    .stat-chip.cold strong { color: #3b82f6; }
+
+    .result-summary {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .account-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .account-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .account-card.rating-hot   { border-left-color: var(--red); }
+    .account-card.rating-warm  { border-left-color: var(--yellow); }
+    .account-card.rating-cold  { border-left-color: #3b82f6; }
+    .account-card:hover { background: var(--surface2); }
+
+    .account-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      cursor: pointer;
+    }
+
+    .account-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .account-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .account-meta a { color: var(--accent-hover); }
+    .account-meta a:hover { text-decoration: underline; }
+
+    .tag-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .tag-rating-hot   { background: #7f1d1d44; color: var(--red); }
+    .tag-rating-warm  { background: #78350f44; color: var(--yellow); }
+    .tag-rating-cold  { background: #1e3a8a44; color: #60a5fa; }
+    .tag-status {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .tag-status.s-in-progress  { background: #1e3a8a44; color: #60a5fa; border-color: #60a5fa; }
+    .tag-status.s-engaged      { background: #064e3b44; color: var(--green); border-color: var(--green); }
+    .tag-status.s-opp-created  { background: #4c1d9544; color: var(--purple); border-color: var(--purple); }
+    .tag-status.s-closed       { background: var(--surface2); color: var(--text-dim); }
+
+    .account-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .status-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .expand-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .expand-btn:hover { color: var(--text); border-color: var(--accent-hover); }
+
+    .account-detail {
+      display: none;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .account-detail.open { display: block; }
+
+    .detail-section { margin-bottom: 16px; }
+    .detail-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .detail-pov {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+    .detail-pov.empty {
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .detail-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: inherit;
+      line-height: 1.55;
+      resize: vertical;
+      min-height: 80px;
+    }
+    .detail-textarea:focus { outline: none; border-color: var(--accent); }
+
+    .links-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+    .link-item { display: flex; gap: 8px; align-items: center; }
+    .link-item input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .link-item .label-input { flex: 0 0 130px; }
+    .link-item button {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 26px; height: 26px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .add-link-btn {
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .add-link-btn:hover { border-color: var(--accent-hover); color: var(--text); }
+
+    .save-indicator { font-size: 11px; color: var(--text-dim); }
+    .save-indicator.saved { color: var(--green); }
+    .save-indicator.saving { color: var(--yellow); }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+
+    .header-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-icon:hover { border-color: var(--accent-hover); color: var(--text); }
+
+    @media (max-width: 800px) {
+      .prospect-main { grid-template-columns: 1fr; }
+      .prospect-sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<header class="hub-header">
+  <div class="breadcrumb">
+    <a href="../index.html">← Hub</a>
+    <span class="sep">/</span>
+    <span>Prospecting Tracker 🎯</span>
+  </div>
+  <div class="page-title">Prospecting Tracker</div>
+  <div class="header-tools">
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importState(event)">
+    <button class="btn-icon" onclick="document.getElementById('importFile').click()" title="Restore status/notes/links from a JSON backup">↑ Import</button>
+    <button class="btn-icon" onclick="exportState()" title="Download your status/notes/links as JSON">↓ Export</button>
+    <button class="btn-icon" onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<main class="prospect-main">
+
+  <aside class="prospect-sidebar">
+    <div class="filter-section">
+      <div class="filter-label">Search</div>
+      <input id="searchInput" type="text" placeholder="Name, domain, industry..." oninput="renderAccounts()">
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Rating</div>
+      <div class="filter-pills" id="ratingFilters">
+        <button class="filter-pill active" data-rating="all">All</button>
+        <button class="filter-pill rating-hot" data-rating="Hot">Hot</button>
+        <button class="filter-pill rating-warm" data-rating="Warm">Warm</button>
+        <button class="filter-pill rating-cold" data-rating="Cold">Cold</button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Status</div>
+      <div class="filter-pills filter-pills-stack" id="statusFilters">
+        <button class="filter-pill active" data-status="all">All</button>
+        <button class="filter-pill" data-status="Not Started">Not Started</button>
+        <button class="filter-pill" data-status="In Progress">In Progress</button>
+        <button class="filter-pill" data-status="Engaged">Engaged</button>
+        <button class="filter-pill" data-status="Opp Created">Opp Created</button>
+        <button class="filter-pill" data-status="Closed">Closed</button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">POV</div>
+      <div class="filter-pills filter-pills-stack" id="researchFilters">
+        <button class="filter-pill active" data-research="all">All</button>
+        <button class="filter-pill" data-research="yes">Has POV</button>
+        <button class="filter-pill" data-research="no">No POV</button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Sort</div>
+      <select id="sortSelect" onchange="renderAccounts()">
+        <option value="rating">Rating (Hot → Cold)</option>
+        <option value="name">Name (A → Z)</option>
+        <option value="status">Status</option>
+        <option value="state">State</option>
+      </select>
+    </div>
+
+    <div class="filter-section">
+      <button class="sidebar-btn" onclick="clearFilters()">Clear filters</button>
+    </div>
+  </aside>
+
+  <div class="prospect-content">
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="result-summary" id="resultSummary"></div>
+    <div id="accountList" class="account-list"></div>
+  </div>
+</main>
+
+<script src="../assets/data.js?v=2"></script>
+<script src="../assets/hub.js?v=2"></script>
+<script src="../assets/prospecting_data.js?v=2"></script>
+<script>
+// ── Auth gate (matches other hub pages) ────────────────
+if (typeof requireAuth === 'function') requireAuth();
+
+// ── State ─────────────────────────────────────────────
+const STATUSES = ['Not Started', 'In Progress', 'Engaged', 'Opp Created', 'Closed'];
+const RATING_ORDER = { Hot: 0, Warm: 1, Cold: 2, '': 9 };
+const STATUS_ORDER = { 'Not Started': 0, 'In Progress': 1, 'Engaged': 2, 'Opp Created': 3, 'Closed': 4 };
+
+const state = {
+  accounts: PROSPECTING_ACCOUNTS,
+  filters: { rating: 'all', status: 'all', research: 'all', search: '' },
+  sort: 'rating',
+  expanded: new Set(),
+  saveTimers: new Map(),
+};
+
+// ── localStorage helpers ──────────────────────────────
+const KEY_STATUS = id => `prospect_status_${id}`;
+const KEY_NOTES  = id => `prospect_notes_${id}`;
+const KEY_LINKS  = id => `prospect_links_${id}`;
+
+function getStatus(id) { return localStorage.getItem(KEY_STATUS(id)) || 'Not Started'; }
+function setStatus(id, v) { localStorage.setItem(KEY_STATUS(id), v); }
+function getNotes(id)  { return localStorage.getItem(KEY_NOTES(id)) || ''; }
+function setNotes(id, v) { localStorage.setItem(KEY_NOTES(id), v); }
+function getLinks(id)  {
+  try { return JSON.parse(localStorage.getItem(KEY_LINKS(id)) || '[]'); }
+  catch { return []; }
+}
+function setLinks(id, arr) { localStorage.setItem(KEY_LINKS(id), JSON.stringify(arr)); }
+
+// ── Render ────────────────────────────────────────────
+function renderStats() {
+  const accts = state.accounts;
+  const byR = { Hot: 0, Warm: 0, Cold: 0 };
+  let withPov = 0;
+  const byS = { 'Not Started': 0, 'In Progress': 0, 'Engaged': 0, 'Opp Created': 0, 'Closed': 0 };
+  for (const a of accts) {
+    if (byR[a.rating] !== undefined) byR[a.rating]++;
+    const s = getStatus(a.id);
+    if (byS[s] !== undefined) byS[s]++;
+    if (a.b2b_use_case) withPov++;
+  }
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-chip"><strong>${accts.length}</strong> accounts</div>
+    <div class="stat-chip hot"><strong>${byR.Hot}</strong> Hot</div>
+    <div class="stat-chip warm"><strong>${byR.Warm}</strong> Warm</div>
+    <div class="stat-chip cold"><strong>${byR.Cold}</strong> Cold</div>
+    <div class="stat-chip">In Progress <strong>${byS['In Progress']}</strong></div>
+    <div class="stat-chip">Engaged <strong>${byS['Engaged']}</strong></div>
+    <div class="stat-chip">Opps <strong>${byS['Opp Created']}</strong></div>
+    <div class="stat-chip">w/ POV <strong>${withPov}</strong></div>
+  `;
+}
+
+function applyFilters(accts) {
+  const f = state.filters;
+  return accts.filter(a => {
+    if (f.rating !== 'all' && a.rating !== f.rating) return false;
+    const s = getStatus(a.id);
+    if (f.status !== 'all' && s !== f.status) return false;
+    if (f.research === 'yes' && !a.b2b_use_case) return false;
+    if (f.research === 'no' && a.b2b_use_case) return false;
+    if (f.search) {
+      const q = f.search.toLowerCase();
+      const notes = getNotes(a.id).toLowerCase();
+      const hay = (a.name + ' ' + (a.domain||'') + ' ' + (a.website||'') + ' ' + (a.industry||'') + ' ' + (a.billing_state||'') + ' ' + notes).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function sortAccounts(accts) {
+  const s = state.sort;
+  const sorted = [...accts];
+  if (s === 'rating') {
+    sorted.sort((a,b) => (RATING_ORDER[a.rating] - RATING_ORDER[b.rating]) || a.name.localeCompare(b.name));
+  } else if (s === 'name') {
+    sorted.sort((a,b) => a.name.localeCompare(b.name));
+  } else if (s === 'status') {
+    sorted.sort((a,b) => (STATUS_ORDER[getStatus(a.id)] - STATUS_ORDER[getStatus(b.id)]) || a.name.localeCompare(b.name));
+  } else if (s === 'state') {
+    sorted.sort((a,b) => (a.billing_state||'').localeCompare(b.billing_state||'') || a.name.localeCompare(b.name));
+  }
+  return sorted;
+}
+
+function statusClass(s) {
+  if (!s || s === 'Not Started') return '';
+  return 's-' + s.toLowerCase().replace(/\s+/g, '-');
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function siteUrl(domain) {
+  if (!domain) return '';
+  if (/^https?:\/\//i.test(domain)) return domain;
+  return 'https://' + domain.replace(/^\/+/, '');
+}
+
+function sfUrl(sfid) {
+  return sfid ? `https://shopify.lightning.force.com/lightning/r/Account/${sfid}/view` : '';
+}
+
+function renderAccounts() {
+  state.filters.search = document.getElementById('searchInput').value.trim();
+  state.sort = document.getElementById('sortSelect').value;
+
+  const filtered = applyFilters(state.accounts);
+  const sorted = sortAccounts(filtered);
+
+  document.getElementById('resultSummary').textContent =
+    `${sorted.length} of ${state.accounts.length} accounts`;
+
+  const list = document.getElementById('accountList');
+  if (!sorted.length) {
+    list.innerHTML = '<div class="empty-state">No accounts match the current filters.</div>';
+    return;
+  }
+  // Cap initial render to 200 for perf; expand on demand
+  const cap = 200;
+  const slice = sorted.slice(0, cap);
+  list.innerHTML = slice.map(renderCard).join('');
+  if (sorted.length > cap) {
+    list.innerHTML += `<div class="empty-state" style="padding:30px">Showing first ${cap} of ${sorted.length}. Use filters to narrow.</div>`;
+  }
+}
+
+function renderCard(a) {
+  const status = getStatus(a.id);
+  const ratingClass = a.rating ? `rating-${a.rating.toLowerCase()}` : '';
+  const isOpen = state.expanded.has(a.id);
+  const pov = a.b2b_use_case || '';
+  const notes = getNotes(a.id);
+  const links = getLinks(a.id);
+  const dom = a.website || a.domain;
+
+  return `
+    <div class="account-card ${ratingClass}" id="card-${a.id}">
+      <div class="account-card-header" onclick="toggleExpand('${a.id}', event)">
+        <div style="flex:1;min-width:0">
+          <div class="account-name">${escapeHtml(a.name || '(no name)')}</div>
+          <div class="account-meta">
+            ${a.rating ? `<span class="tag-pill tag-rating-${a.rating.toLowerCase()}">${a.rating}</span>` : ''}
+            <span class="tag-pill tag-status ${statusClass(status)}">${status}</span>
+            ${a.industry ? `<span>${escapeHtml(a.industry)}</span>` : ''}
+            ${a.billing_state ? `<span>${escapeHtml(a.billing_state)}</span>` : ''}
+            ${dom ? `<a href="${siteUrl(dom)}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(dom)}</a>` : ''}
+            ${a.salesforce_id ? `<a href="${sfUrl(a.salesforce_id)}" target="_blank" onclick="event.stopPropagation()">SF</a>` : ''}
+            ${pov ? '<span style="color:var(--green)">● POV</span>' : '<span style="color:var(--text-dim)">○ no POV</span>'}
+          </div>
+        </div>
+        <div class="account-actions" onclick="event.stopPropagation()">
+          <select class="status-select" onchange="updateStatus('${a.id}', this.value)">
+            ${STATUSES.map(s => `<option value="${s}" ${s===status?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <button class="expand-btn" onclick="toggleExpand('${a.id}', event)">${isOpen ? '▾' : '▸'}</button>
+        </div>
+      </div>
+
+      <div class="account-detail ${isOpen ? 'open' : ''}">
+        <div class="detail-section">
+          <div class="detail-label"><span>POV — Why Shopify Plus B2B is a fit</span></div>
+          <div class="detail-pov ${pov?'':'empty'}">${pov ? escapeHtml(pov) : 'No POV yet — research this account next time you sit down with Claude.'}</div>
+        </div>
+
+        ${a.notes ? `
+        <div class="detail-section">
+          <div class="detail-label"><span>Account snapshot</span></div>
+          <div class="detail-pov">${escapeHtml(a.notes)}</div>
+        </div>` : ''}
+
+        <div class="detail-section">
+          <div class="detail-label">
+            <span>Prospecting Notes (saved to this browser)</span>
+            <span class="save-indicator" id="ind-notes-${a.id}"></span>
+          </div>
+          <textarea class="detail-textarea" placeholder="Calls, signals, contacts you've found, things you'd want to remember..."
+            oninput="autoSaveNotes('${a.id}', this.value)">${escapeHtml(notes)}</textarea>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-label"><span>Links / Resources</span></div>
+          <div class="links-list">
+            ${links.map((l, i) => renderLinkRow(a.id, l, i)).join('')}
+          </div>
+          <button class="add-link-btn" onclick="addLink('${a.id}')">+ Add link</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLinkRow(aid, lnk, i) {
+  return `
+    <div class="link-item">
+      <input class="label-input" placeholder="Label" value="${escapeHtml(lnk.label||'')}"
+        oninput="updateLink('${aid}', ${i}, 'label', this.value)">
+      <input placeholder="https://..." value="${escapeHtml(lnk.url||'')}"
+        oninput="updateLink('${aid}', ${i}, 'url', this.value)">
+      <button onclick="removeLink('${aid}', ${i})" title="Remove">×</button>
+    </div>
+  `;
+}
+
+// ── Actions ───────────────────────────────────────────
+function toggleExpand(id, ev) {
+  if (ev) ev.stopPropagation();
+  if (state.expanded.has(id)) state.expanded.delete(id);
+  else state.expanded.add(id);
+  renderAccounts();
+}
+
+function updateStatus(id, v) {
+  setStatus(id, v);
+  renderStats();
+  renderAccounts();
+}
+
+function autoSaveNotes(id, v) {
+  const ind = document.getElementById('ind-notes-' + id);
+  if (ind) { ind.textContent = 'editing...'; ind.className = 'save-indicator saving'; }
+  if (state.saveTimers.has(id)) clearTimeout(state.saveTimers.get(id));
+  const t = setTimeout(() => {
+    setNotes(id, v);
+    if (ind) { ind.textContent = '✓ saved'; ind.className = 'save-indicator saved'; }
+    setTimeout(() => { if (ind) ind.textContent = ''; }, 1500);
+  }, 500);
+  state.saveTimers.set(id, t);
+}
+
+function updateLink(aid, i, key, value) {
+  const links = getLinks(aid);
+  if (!links[i]) links[i] = { label: '', url: '' };
+  links[i][key] = value;
+  setLinks(aid, links);
+}
+
+function addLink(aid) {
+  const links = getLinks(aid);
+  links.push({ label: '', url: '' });
+  setLinks(aid, links);
+  renderAccounts();
+}
+
+function removeLink(aid, i) {
+  const links = getLinks(aid);
+  links.splice(i, 1);
+  setLinks(aid, links);
+  renderAccounts();
+}
+
+function clearFilters() {
+  state.filters = { rating: 'all', status: 'all', research: 'all', search: '' };
+  document.getElementById('searchInput').value = '';
+  ['ratingFilters', 'statusFilters', 'researchFilters'].forEach(g => {
+    document.querySelectorAll(`#${g} .filter-pill`).forEach(b => {
+      b.classList.toggle('active',
+        b.dataset.rating === 'all' || b.dataset.status === 'all' || b.dataset.research === 'all');
+    });
+  });
+  renderAccounts();
+}
+
+// ── Export / Import (backup local state) ──────────────
+function exportState() {
+  const data = { exportedAt: new Date().toISOString(), entries: {} };
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('prospect_')) data.entries[k] = localStorage.getItem(k);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `prospecting-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importState(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const entries = data.entries || data;
+      let count = 0;
+      Object.entries(entries).forEach(([k, v]) => {
+        if (k.startsWith('prospect_')) { localStorage.setItem(k, v); count++; }
+      });
+      alert(`Restored ${count} entries.`);
+      renderStats();
+      renderAccounts();
+    } catch (err) {
+      alert('Could not parse this file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+// ── Wire filter pills ─────────────────────────────────
+document.querySelectorAll('#ratingFilters .filter-pill').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#ratingFilters .filter-pill').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.filters.rating = b.dataset.rating;
+    renderAccounts();
+  });
+});
+document.querySelectorAll('#statusFilters .filter-pill').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#statusFilters .filter-pill').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.filters.status = b.dataset.status;
+    renderAccounts();
+  });
+});
+document.querySelectorAll('#researchFilters .filter-pill').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#researchFilters .filter-pill').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.filters.research = b.dataset.research;
+    renderAccounts();
+  });
+});
+
+renderStats();
+renderAccounts();
+</script>
+
+</body>
+</html>
