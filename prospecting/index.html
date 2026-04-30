@@ -187,6 +187,8 @@
       align-items: center;
       gap: 8px;
       flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .status-select {
@@ -211,6 +213,26 @@
       font-family: inherit;
     }
     .expand-btn:hover { color: var(--text); border-color: var(--accent-hover); }
+
+    .quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .quick-link:hover { color: var(--text); border-color: var(--accent-hover); background: var(--surface2); }
+    .quick-link.sf:hover { border-color: #00a1e0; color: #00a1e0; }
+    .quick-link.site:hover { border-color: var(--green); color: var(--green); }
+    .quick-link.disabled { opacity: 0.35; pointer-events: none; }
 
     .account-detail {
       display: none;
@@ -578,12 +600,17 @@ function renderCard(a) {
             ${a.size_label ? `<span class="tag-pill" style="background:#064e3b66;color:var(--green);border:1px solid var(--green)">${escapeHtml(a.size_label)}</span>` : ''}
             ${a.industry ? `<span>${escapeHtml(a.industry)}</span>` : ''}
             ${a.billing_state ? `<span>${escapeHtml(a.billing_state)}</span>` : ''}
-            ${dom ? `<a href="${siteUrl(dom)}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(dom)}</a>` : ''}
-            ${a.salesforce_id ? `<a href="${sfUrl(a.salesforce_id)}" target="_blank" onclick="event.stopPropagation()">SF</a>` : ''}
+            ${dom ? `<span style="color:var(--text-dim)">${escapeHtml(dom)}</span>` : ''}
             ${pov ? '<span style="color:var(--green)">● POV</span>' : '<span style="color:var(--text-dim)">○ no POV</span>'}
           </div>
         </div>
         <div class="account-actions" onclick="event.stopPropagation()">
+          ${dom
+            ? `<a class="quick-link site" href="${siteUrl(dom)}" target="_blank" rel="noopener" title="Open ${escapeHtml(dom)} in a new tab">🌐 Site ↗</a>`
+            : `<span class="quick-link site disabled" title="No website on file">🌐 Site</span>`}
+          ${a.salesforce_id
+            ? `<a class="quick-link sf" href="${sfUrl(a.salesforce_id)}" target="_blank" rel="noopener" title="Open Salesforce record in a new tab">☁️ SF ↗</a>`
+            : `<span class="quick-link sf disabled" title="No Salesforce ID">☁️ SF</span>`}
           <select class="status-select" onchange="updateStatus('${a.id}', this.value)">
             ${STATUSES.map(s => `<option value="${s}" ${s===status?'selected':''}>${s}</option>`).join('')}
           </select>
