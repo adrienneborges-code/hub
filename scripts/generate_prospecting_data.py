@@ -20,14 +20,18 @@ KEEP_FIELDS = [
     'industry', 'billing_state', 'salesforce_id',
     'b2b_use_case', 'notes', 'tags', 'current_platform',
     'last_activity_date', 'researched',
+    'priority_score', 'size_label', 'est_revenue_usd', 'est_employees',
 ]
 
 
 def main():
     accounts = json.load(open(ACCOUNTS_PATH))
     rated = [a for a in accounts if a.get('rating')]
+    # Pre-sort: rating bucket, then priority_score DESC, then name. Browser also sorts but
+    # this saves the user a wait on first paint of 2,500 cards.
     rated.sort(key=lambda a: (
         {'Hot': 0, 'Warm': 1, 'Cold': 2}.get(a.get('rating', ''), 9),
+        -(a.get('priority_score') or 0),
         (a.get('name') or '').lower(),
     ))
 

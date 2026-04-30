@@ -387,7 +387,9 @@
     <div class="filter-section">
       <div class="filter-label">Sort</div>
       <select id="sortSelect" onchange="renderAccounts()">
-        <option value="rating">Rating (Hot → Cold)</option>
+        <option value="rating">Rating, then priority</option>
+        <option value="priority">Priority score (all)</option>
+        <option value="revenue">Revenue (largest first)</option>
         <option value="name">Name (A → Z)</option>
         <option value="status">Status</option>
         <option value="state">State</option>
@@ -486,14 +488,28 @@ function applyFilters(accts) {
 function sortAccounts(accts) {
   const s = state.sort;
   const sorted = [...accts];
+  const byPriority = (a, b) =>
+    (b.priority_score || 0) - (a.priority_score || 0)
+    || (a.name || '').localeCompare(b.name || '');
+
   if (s === 'rating') {
-    sorted.sort((a,b) => (RATING_ORDER[a.rating] - RATING_ORDER[b.rating]) || a.name.localeCompare(b.name));
+    sorted.sort((a,b) =>
+      (RATING_ORDER[a.rating] - RATING_ORDER[b.rating]) || byPriority(a, b));
+  } else if (s === 'priority') {
+    sorted.sort(byPriority);
+  } else if (s === 'revenue') {
+    sorted.sort((a,b) =>
+      (b.est_revenue_usd || 0) - (a.est_revenue_usd || 0) || byPriority(a, b));
   } else if (s === 'name') {
     sorted.sort((a,b) => a.name.localeCompare(b.name));
   } else if (s === 'status') {
-    sorted.sort((a,b) => (STATUS_ORDER[getStatus(a.id)] - STATUS_ORDER[getStatus(b.id)]) || a.name.localeCompare(b.name));
+    sorted.sort((a,b) =>
+      (STATUS_ORDER[getStatus(a.id)] - STATUS_ORDER[getStatus(b.id)])
+      || byPriority(a, b));
   } else if (s === 'state') {
-    sorted.sort((a,b) => (a.billing_state||'').localeCompare(b.billing_state||'') || a.name.localeCompare(b.name));
+    sorted.sort((a,b) =>
+      (a.billing_state||'').localeCompare(b.billing_state||'')
+      || byPriority(a, b));
   }
   return sorted;
 }
@@ -558,6 +574,8 @@ function renderCard(a) {
           <div class="account-meta">
             ${a.rating ? `<span class="tag-pill tag-rating-${a.rating.toLowerCase()}">${a.rating}</span>` : ''}
             <span class="tag-pill tag-status ${statusClass(status)}">${status}</span>
+            ${a.tier ? `<span class="tag-pill" style="background:var(--surface2);color:var(--text-muted);border:1px solid var(--border)">${a.tier}</span>` : ''}
+            ${a.size_label ? `<span class="tag-pill" style="background:#064e3b66;color:var(--green);border:1px solid var(--green)">${escapeHtml(a.size_label)}</span>` : ''}
             ${a.industry ? `<span>${escapeHtml(a.industry)}</span>` : ''}
             ${a.billing_state ? `<span>${escapeHtml(a.billing_state)}</span>` : ''}
             ${dom ? `<a href="${siteUrl(dom)}" target="_blank" onclick="event.stopPropagation()">${escapeHtml(dom)}</a>` : ''}
